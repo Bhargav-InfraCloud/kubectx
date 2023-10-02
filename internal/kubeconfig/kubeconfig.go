@@ -18,7 +18,7 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
 type ReadWriteResetCloser interface {
@@ -81,6 +81,5 @@ func (k *Kubeconfig) Save() error {
 		return errors.Wrap(err, "failed to reset file")
 	}
 	enc := yaml.NewEncoder(k.f)
-	enc.SetIndent(0)
 	return enc.Encode(k.rootNode)
 }
