@@ -49,7 +49,6 @@ func parseRenameSyntax(v string) (string, string, bool) {
 // current-context preference is also updated.
 func (op RenameOp) Run(_, stderr io.Writer) error {
 	kc := new(kubeconfig.Kubeconfig).WithLoader(kubeconfig.DefaultLoader)
-	defer kc.Close()
 	if err := kc.Parse(); err != nil {
 		return errors.Wrap(err, "kubeconfig error")
 	}

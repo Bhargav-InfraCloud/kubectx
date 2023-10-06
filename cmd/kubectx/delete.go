@@ -50,7 +50,6 @@ func (op DeleteOp) Run(_, stderr io.Writer) error {
 // indicated by ".".
 func deleteContext(name string) (deleteName string, wasActiveContext bool, err error) {
 	kc := new(kubeconfig.Kubeconfig).WithLoader(kubeconfig.DefaultLoader)
-	defer kc.Close()
 	if err := kc.Parse(); err != nil {
 		return deleteName, false, errors.Wrap(err, "kubeconfig error")
 	}

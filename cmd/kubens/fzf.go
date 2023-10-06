@@ -45,7 +45,6 @@ func (op InteractiveSwitchOp) Run(_, stderr io.Writer) error {
 		}
 		return errors.Wrap(err, "kubeconfig error")
 	}
-	defer kc.Close()
 
 	cmd := exec.Command("fzf", "--ansi", "--no-preview")
 	var out bytes.Buffer

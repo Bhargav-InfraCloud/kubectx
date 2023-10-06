@@ -15,9 +15,11 @@
 package kubeconfig
 
 import (
-	"github.com/ahmetb/kubectx/internal/cmdutil"
 	"os"
 	"path/filepath"
+
+	"github.com/ahmetb/kubectx/internal/cmdutil"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 
 	"github.com/pkg/errors"
 )
@@ -28,15 +30,13 @@ var (
 
 type StandardKubeconfigLoader struct{}
 
-type kubeconfigFile struct{ *os.File }
+type kubeconfigFile struct {
+	node *yaml.RNode
+}
 
-func (*StandardKubeconfigLoader) Load() ([]ReadWriteResetCloser, error) {
-	cfgPath, err := kubeconfigPath()
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot determine kubeconfig path")
-	}
-
-	f, err := os.OpenFile(cfgPath, os.O_RDWR, 0)
+// TODO :: Bhargav :: Replace []kubeconfigFile with slice of some interface finally
+func (*StandardKubeconfigLoader) Load(cfgPath string) ([]kubeconfigFile, error) {
+	node, err := yaml.ReadFile(cfgPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, errors.Wrap(err, "kubeconfig file not found")
@@ -45,15 +45,7 @@ func (*StandardKubeconfigLoader) Load() ([]ReadWriteResetCloser, error) {
 	}
 
 	// TODO we'll return all kubeconfig files when we start implementing multiple kubeconfig support
-	return []ReadWriteResetCloser{ReadWriteResetCloser(&kubeconfigFile{f})}, nil
-}
-
-func (kf *kubeconfigFile) Reset() error {
-	if err := kf.Truncate(0); err != nil {
-		return errors.Wrap(err, "failed to truncate file")
-	}
-	_, err := kf.Seek(0, 0)
-	return errors.Wrap(err, "failed to seek in file")
+	return []kubeconfigFile{{node}}, nil
 }
 
 func kubeconfigPath() (string, error) {

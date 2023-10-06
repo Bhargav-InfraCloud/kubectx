@@ -50,7 +50,6 @@ func TestSave(t *testing.T) {
 	in := "a: [1, 2, 3]\n"
 	test := WithMockKubeconfigLoader(in)
 	kc := new(Kubeconfig).WithLoader(test)
-	defer kc.Close()
 	if err := kc.Parse(); err != nil {
 		t.Fatal(err)
 	}

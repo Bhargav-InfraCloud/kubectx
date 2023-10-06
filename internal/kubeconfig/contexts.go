@@ -20,7 +20,7 @@ import (
 )
 
 func (k *Kubeconfig) contextsNode() (*yaml.Node, error) {
-	contexts := valueOf(k.rootNode, "contexts")
+	contexts := valueOf(k.rootNode.YNode(), "contexts")
 	if contexts == nil {
 		return nil, errors.New("\"contexts\" entry is nil")
 	} else if contexts.Kind != yaml.SequenceNode {
@@ -45,7 +45,7 @@ func (k *Kubeconfig) contextNode(name string) (*yaml.Node, error) {
 }
 
 func (k *Kubeconfig) ContextNames() []string {
-	contexts := valueOf(k.rootNode, "contexts")
+	contexts := valueOf(k.rootNode.YNode(), "contexts")
 	if contexts == nil {
 		return nil
 	}

@@ -48,7 +48,6 @@ func (op InteractiveSwitchOp) Run(_, stderr io.Writer) error {
 		}
 		return errors.Wrap(err, "kubeconfig error")
 	}
-	kc.Close()
 
 	cmd := exec.Command("fzf", "--ansi", "--no-preview")
 	var out bytes.Buffer
@@ -86,7 +85,6 @@ func (op InteractiveDeleteOp) Run(_, stderr io.Writer) error {
 		}
 		return errors.Wrap(err, "kubeconfig error")
 	}
-	kc.Close()
 
 	if len(kc.ContextNames()) == 0 {
 		return errors.New("no contexts found in config")

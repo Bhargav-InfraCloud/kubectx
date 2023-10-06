@@ -15,28 +15,23 @@
 package kubeconfig
 
 import (
-	"io"
-
 	"github.com/pkg/errors"
 	"sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
-type ReadWriteResetCloser interface {
-	io.ReadWriteCloser
-
-	// Reset truncates the file and seeks to the beginning of the file.
-	Reset() error
-}
+// TODO :: Bhargav :: Change name as per final usage
+// type ReadWriteResetCloser interface{}
 
 type Loader interface {
-	Load() ([]ReadWriteResetCloser, error)
+	Load(cfgPath string) ([]kubeconfigFile, error)
 }
 
 type Kubeconfig struct {
 	loader Loader
 
-	f        ReadWriteResetCloser
-	rootNode *yaml.Node
+	f           *kubeconfigFile
+	rootNode    *yaml.RNode
+	kubeCfgPath string
 }
 
 func (k *Kubeconfig) WithLoader(l Loader) *Kubeconfig {
@@ -44,31 +39,28 @@ func (k *Kubeconfig) WithLoader(l Loader) *Kubeconfig {
 	return k
 }
 
-func (k *Kubeconfig) Close() error {
-	if k.f == nil {
-		return nil
-	}
-	return k.f.Close()
-}
-
 func (k *Kubeconfig) Parse() error {
-	files, err := k.loader.Load()
+	cfgPath, err := kubeconfigPath()
 	if err != nil {
-		return errors.Wrap(err, "failed to load")
+		return errors.Wrap(err, "cannot determine kubeconfig path")
+	}
+	k.kubeCfgPath = cfgPath
+
+	files, err := k.loader.Load(cfgPath)
+	if err != nil {
+		return errors.Wrap(err, "failed to load kubeconfig")
 	}
 
 	// TODO since we don't support multiple kubeconfig files at the moment, there's just 1 file
-	f := files[0]
+	k.f = &files[0]
+	k.rootNode = k.f.node
 
-	k.f = f
-	var v yaml.Node
-	if err := yaml.NewDecoder(f).Decode(&v); err != nil {
-		return errors.Wrap(err, "failed to decode")
+	// Check if kubeconfig document is a map document
+	_, err = k.rootNode.FieldRNodes()
+	if err != nil {
+		return errors.Wrap(err, "kubeconfig file is not a map document")
 	}
-	k.rootNode = v.Content[0]
-	if k.rootNode.Kind != yaml.MappingNode {
-		return errors.New("kubeconfig file is not a map document")
-	}
+
 	return nil
 }
 
@@ -77,9 +69,5 @@ func (k *Kubeconfig) Bytes() ([]byte, error) {
 }
 
 func (k *Kubeconfig) Save() error {
-	if err := k.f.Reset(); err != nil {
-		return errors.Wrap(err, "failed to reset file")
-	}
-	enc := yaml.NewEncoder(k.f)
-	return enc.Encode(k.rootNode)
+	return yaml.WriteFile(k.rootNode, k.kubeCfgPath)
 }

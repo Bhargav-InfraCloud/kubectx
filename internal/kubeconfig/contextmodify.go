@@ -42,7 +42,7 @@ func (k *Kubeconfig) DeleteContextEntry(deleteName string) error {
 }
 
 func (k *Kubeconfig) ModifyCurrentContext(name string) error {
-	currentCtxNode := valueOf(k.rootNode, "current-context")
+	currentCtxNode := valueOf(k.rootNode.YNode(), "current-context")
 	if currentCtxNode != nil {
 		currentCtxNode.Value = name
 		return nil
@@ -57,7 +57,7 @@ func (k *Kubeconfig) ModifyCurrentContext(name string) error {
 		Kind:  yaml.ScalarNode,
 		Value: name,
 		Tag:   "!!str"}
-	k.rootNode.Content = append(k.rootNode.Content, keyNode, valueNode)
+	k.rootNode.Pipe(yaml.Append(keyNode, valueNode))
 	return nil
 }
 

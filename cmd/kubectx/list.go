@@ -31,7 +31,6 @@ type ListOp struct{}
 
 func (_ ListOp) Run(stdout, stderr io.Writer) error {
 	kc := new(kubeconfig.Kubeconfig).WithLoader(kubeconfig.DefaultLoader)
-	defer kc.Close()
 	if err := kc.Parse(); err != nil {
 		if cmdutil.IsNotFoundErr(err) {
 			printer.Warning(stderr, "kubeconfig file not found")
